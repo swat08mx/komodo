@@ -23,7 +23,7 @@ def allowed_file(filename):
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('index.html', pipelines=PIPELINES)
 
 @app.route('/submission', methods=['POST', 'GET'])
 def submission():
