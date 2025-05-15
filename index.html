@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Bioinformatics pipelines</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .container { max-width: 600px; margin: auto; }
+        h1 { text-align: center; }
+        .output { margin-top: 20px; padding: 10px; border: 1px solid #ccc; background: #f9f9f9; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Bioinformatics pipelines</h1>
+    <form method="POST" enctype="multipart/form-data">
+        <label for="pipeline">Choose a pipeline:</label>
+        <select name="pipeline" id="pipeline" required>
+            <option value="" disabled selected>Select pipeline</option>
+            {% for pipeline in pipelines %}
+                <option value="{{ pipeline }}">{{ pipeline }}</option>
+            {% endfor %}
+        </select>
+        <br><br>
+        <label for="sample_file">Upload sample file:</label>
+        <input type="file" name="sample_file" id="sample_file" required>
+        <br><br>
+        <button type="submit">Run</button>
+    </form>
+    {% if result %}
+        <div class="output">
+            <h3>Output:</h3>
+            <pre>{{ result }}</pre>
+        </div>
+    {% endif %}
+</div>
+</body>
