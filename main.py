@@ -12,40 +12,38 @@ PIPELINES = {
     'Variant Calling': 'pipelines/variant_calling.py',
     'Metagenomics': 'pipelines/metagenomics.py'
 }
+ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'csv', 'tsv'}
 
-@app.route('/', methods=['GET', 'POST'])
+# Create upload folder if it doesn't exist
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@app.route('/')
 def index():
-    result = None
-    if request.method == 'POST':
-        pipeline_name = request.form.get('pipeline')
-        file = request.files.get('sample_file')
-        if file and pipeline_name:
-            filepath = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
-            file.save(filepath)
-            script_path = PIPELINES.get(pipeline_name)
-            if script_path:
-                try:
-                    # Run the Python script and capture output
-                    completed = subprocess.run(
-                        ['python', script_path, filepath],
-                        capture_output=True, text=True, check=True
-                    )
-                    result = completed.stdout
-                except subprocess.CalledProcessError as e:
-                    result = f"Error: {e.stderr}"
-            else:
-                result = "Invalid pipeline selected."
-    return render_template('index.html', pipelines=PIPELINES.keys(), result=result)
-
-@app.route('/upload', methods=['GET', 'POST'])
-def upload_file():
-    if request.method == 'POST':
-        file = request.files['file']
-        if file:
-            filename = secure_filename(file.filename)
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            return redirect(url_for('download_file', name=filename))
     return render_template('index.html')
+
+@app.route('/submission', methods=['POST'])
+def submission():
+    # Check if the post request has the file part
+    if 'file' not in request.files:
+        return 'No file part in the request'
+
+    file = request.files['file']
+
+    # If user does not select file
+    if file.filename == '':
+        return 'No selected file'
+
+    if file and allowed_file(file.filename):
+        # Secure the filename before storing
+        filename = secure_filename(file.filename)
+        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        return 'File successfully uploaded!'
+
+    return 'Invalid file type'
 
 
 if __name__ == '__main__':
