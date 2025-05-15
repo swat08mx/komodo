@@ -25,7 +25,7 @@ def allowed_file(filename):
 def index():
     return render_template('index.html')
 
-@app.route('/submission', methods=['POST'])
+@app.route('/submission', methods=['POST', 'GET'])
 def submission():
     # Check if the post request has the file part
     if 'file' not in request.files:
