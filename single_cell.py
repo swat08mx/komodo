@@ -1,10 +1,11 @@
-!pip install scanpy
-!pip install scvi-tools
-!pip install scikit-misc
-!pip install leidenalg
-!pip install gseapy
+#!pip install scanpy
+#!pip install scvi-tools
+#!pip install scikit-misc
+#!pip install leidenalg
+#!pip install gseapy
 import gseapy as gp
 import locale
+from tqdm import tqdm
 locale.getpreferredencoding = lambda: "UTF-8"
 import scanpy as sc
 import scvi
@@ -17,6 +18,7 @@ import matplotlib.pyplot as plt
 from scipy.sparse import csr_matrix
 def pipeline(csv_path):
     adata = sc.read_csv(csv_path).T
+    print("Read")
     sc.pp.filter_genes(adata, min_cells = 10)
     sc.pp.highly_variable_genes(adata, n_top_genes = 2000, subset = True, flavor = 'seurat_v3')
     scvi.model.SCVI.setup_anndata(adata)
@@ -46,18 +48,23 @@ def pipeline(csv_path):
     adata = adata[adata.obs.n_genes_by_counts < upper_lim]
     adata = adata[adata.obs.pct_counts_mt < 20]
     adata = adata[adata.obs.pct_counts_ribo < 2]
-
+    print("Function done")
     return adata
+
 out=[]
 lists=[]
-path = "/content/drive/MyDrive/samples/"
+path = "/home/ubuntu/uploads/"
 pattern = r".*\.csv$"
-for file in os.listdir(path):
-  if re.search(pattern, file):
-    lists.append(file)
-for names in lists:
-  out.append(pipeline('/content/drive/MyDrive/samples/' + names))
-data = sc.concat(out)
+#for file in tqdm(os.listdir(path)):
+#  if re.search(pattern, file):
+#    print("Matched")
+#    lists.append(file)
+#for names in lists:
+#  out.append(pipeline('/home/ubuntu/' + names))
+#data = sc.concat(out)
+
+data = pipeline("/home/ubuntu/uploads/GSM5226577_C54ctr_raw_counts.csv")
+print("File read")
 sc.pp.filter_genes(data, min_cells=10)
 data.X = csr_matrix(data.X)
 data.obs.groupby('Sample').count()
@@ -138,4 +145,4 @@ enr = gp.enrichr(gene_list = scvi_de.index.tolist(),
                  organism = 'human',
                  outdir=None,
                  background = subset.var_names.to_list())
-enr.results
+print("DONE")
