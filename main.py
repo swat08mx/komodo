@@ -25,7 +25,8 @@ def allowed_file(filename):
 def index():
     return render_template('index.html', pipelines=PIPELINES)
 
-@app.route('/submission', methods=['POST', 'GET'])
+
+@app.route('/submission', methods=['POST'])
 def submission():
     # Check if the post request has the file part
     if 'file' not in request.files:
@@ -41,9 +42,9 @@ def submission():
         # Secure the filename before storing
         filename = secure_filename(file.filename)
         file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        return 'File successfully uploaded!'
+        return 'File successfully uploaded, thank you!'
 
-    return 'Invalid file type'
+    return "INvalid file type"
 
 
 if __name__ == '__main__':
