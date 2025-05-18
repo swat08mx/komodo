@@ -2,18 +2,153 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Bioinformatics pipelines</title>
+    <title>Bioinformatics Pipelines</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        body { font-family: Arial, sans-serif; margin: 40px; }
-        .container { max-width: 600px; margin: auto; }
-        h1 { text-align: center; }
-        .output { margin-top: 20px; padding: 10px; border: 1px solid #ccc; background: #f9f9f9; }
+        body {
+            background: #f4f8fb;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 480px;
+            margin: 48px auto;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(60,72,88,0.08);
+            padding: 36px 32px 28px 32px;
+        }
+        h1 {
+            text-align: center;
+            color: #2b3a55;
+            margin-bottom: 32px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+        form label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 1.07em;
+            color: #34495e;
+            font-weight: 500;
+        }
+        select, input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            border: 1.5px solid #d1d9e6;
+            border-radius: 8px;
+            background: #f7fafc;
+            margin-bottom: 20px;
+            font-size: 1em;
+            transition: border 0.2s;
+        }
+        select:focus, input[type="file"]:focus {
+            border-color: #3a8dde;
+            outline: none;
+        }
+        button[type="submit"] {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(90deg, #3a8dde 0%, #6fc3ff 100%);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(60,72,88,0.09);
+            transition: background 0.2s, box-shadow 0.2s;
+        }
+        button[type="submit"]:hover {
+            background: linear-gradient(90deg, #2779bd 0%, #4db8ff 100%);
+            box-shadow: 0 4px 16px rgba(60,72,88,0.12);
+        }
+        .output {
+            margin-top: 28px;
+            padding: 18px 16px;
+            border: 1.5px solid #e3e8ee;
+            background: #f6fbff;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(60,72,88,0.04);
+        }
+        .output h3 {
+            margin: 0 0 10px 0;
+            color: #2b3a55;
+            font-size: 1.15em;
+        }
+        pre {
+            background: #eaf3fa;
+            padding: 12px;
+            border-radius: 7px;
+            font-size: 0.97em;
+            color: #2d3e50;
+            overflow-x: auto;
+        }
+        /* Message styles */
+        #message {
+            margin-top: 16px;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 1em;
+            text-align: center;
+            display: none;
+        }
+        #message.success {
+            background-color: #e6f9e6;
+            color: #217a38;
+            border: 1px solid #b6e6b6;
+            display: block;
+        }
+        #message.error {
+            background-color: #fde6e6;
+            color: #a12c2c;
+            border: 1px solid #f5b6b6;
+            display: block;
+        }
+        #message.loading {
+            background-color: #e6f0fd;
+            color: #2b3a55;
+            border: 1px solid #b6d1f5;
+            display: block;
+        }
+        /* Progress bar styles */
+        .progress-container {
+            width: 100%;
+            background: #eaf3fa;
+            border-radius: 8px;
+            margin-top: 16px;
+            height: 18px;
+            box-shadow: 0 1px 4px rgba(60,72,88,0.03);
+            display: none;
+        }
+        .progress-bar {
+            height: 100%;
+            border-radius: 8px;
+            background: linear-gradient(90deg, #3a8dde 0%, #6fc3ff 100%);
+            width: 0%;
+            transition: width 0.2s;
+        }
+        .progress-text {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            transform: translateX(-50%);
+            font-size: 0.95em;
+            color: #2b3a55;
+            line-height: 18px;
+        }
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px 8px 16px 8px;
+            }
+        }
     </style>
 </head>
 <body>
 <div class="container">
-    <h1>Bioinformatics pipelines</h1>
-    <form method="POST" enctype="multipart/form-data" action="/submission">
+    <h1>Bioinformatics Pipelines</h1>
+    <form id="pipelineForm" method="POST" enctype="multipart/form-data" action="/submission">
         <label for="pipeline">Choose a pipeline:</label>
         <select name="pipeline" id="pipeline" required>
             <option value="" disabled selected>Select pipeline</option>
@@ -21,12 +156,17 @@
                 <option value="{{ pipeline }}">{{ pipeline }}</option>
             {% endfor %}
         </select>
-        <br><br>
+
         <label for="sample_file">Upload sample file:</label>
         <input type="file" name="file" id="sample_file" required>
-        <br><br>
-        <button type="submit">Run</button>
+
+        <button type="submit">Upload</button>
     </form>
+    <div class="progress-container" id="progressContainer">
+        <div class="progress-bar" id="progressBar"></div>
+        <span class="progress-text" id="progressText" style="position:absolute;"></span>
+    </div>
+    <div id="message"></div>
     {% if result %}
         <div class="output">
             <h3>Output:</h3>
@@ -34,4 +174,62 @@
         </div>
     {% endif %}
 </div>
+<script>
+document.getElementById('pipelineForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const form = e.target;
+    const formData = new FormData(form);
+    const messageDiv = document.getElementById('message');
+    const progressContainer = document.getElementById('progressContainer');
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+
+    // Reset message and progress bar
+    messageDiv.style.display = "none";
+    progressBar.style.width = "0%";
+    progressText.textContent = "";
+    progressContainer.style.display = "block";
+    progressContainer.style.position = "relative";
+
+    // Use XMLHttpRequest for progress
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', form.action, true);
+
+    xhr.upload.onprogress = function(event) {
+        if (event.lengthComputable) {
+            let percent = Math.round((event.loaded / event.total) * 100);
+            progressBar.style.width = percent + "%";
+            progressText.textContent = percent + "%";
+        }
+    };
+
+    xhr.onload = function() {
+        progressBar.style.width = "100%";
+        progressText.textContent = "100%";
+        setTimeout(() => {
+            progressContainer.style.display = "none";
+        }, 600);
+
+        messageDiv.style.display = "block";
+        if (xhr.status === 200 && xhr.responseText.toLowerCase().includes('success')) {
+            messageDiv.textContent = xhr.responseText;
+            messageDiv.className = "success";
+            form.reset();
+        } else {
+            messageDiv.textContent = xhr.responseText;
+            messageDiv.className = "error";
+        }
+    };
+
+    xhr.onerror = function() {
+        progressContainer.style.display = "none";
+        messageDiv.style.display = "block";
+        messageDiv.textContent = "Upload failed. Please try again.";
+        messageDiv.className = "error";
+    };
+
+    xhr.send(formData);
+});
+</script>
 </body>
+</html>
